@@ -4,7 +4,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-
+const fs = require("fs");
+const pg = require("pg");
 const app = express();
 const port = 3000;
 
@@ -12,8 +13,30 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Set up MySQL connection
-const db =' mysql --user avnadmin --password=AVNS_Pt77Qn3tm0nOtLYE_Kx --host mysql-19e18526-kingshawkat3-1eb9.e.aivencloud.com --port 27396 defaultdb'
+const db = {
+    user: process.env.USER,
+    password: process.env.PASSWORD,
+    host: process.env.HOST,
+    port: process.env.PORT,
+    database: process.env.DATABASE,
+    ssl: {
+      rejectUnauthorized: true,
+      ca: fs.readFileSync("./ca.pem").toString(),
+    },
+  };
 
+  const client = new pg.Client(db);
+  client.connect(function (err) {
+    if (err) throw err;
+    client.query("SELECT VERSION()", [], function (err, result) {
+      if (err) throw err;
+  
+      console.log(result.rows[0]);
+      client.end(function (err) {
+        if (err) throw err;
+      });
+    });
+  });
 
 // Set up multer storage for handling file uploads
 const storage = multer.diskStorage({
