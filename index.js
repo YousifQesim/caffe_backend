@@ -47,6 +47,9 @@ const upload = multer({ storage: storage });
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+});
 // Add item to category with image
 app.post('/api/items/:categoryId', upload.single('image'), (req, res) => {
     const { categoryId } = req.params;
