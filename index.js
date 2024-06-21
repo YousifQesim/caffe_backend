@@ -4,8 +4,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const multer = require('multer');
 const path = require('path');
-const fs = require("fs");
-const pg = require("pg");
+
 const app = express();
 const port = 3000;
 
@@ -13,30 +12,17 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Set up MySQL connection
-const db = {
-    user: process.env.USER,
-    password: process.env.PASSWORD,
-    host: process.env.HOST,
-    port: process.env.PORT,
-    database: process.env.DATABASE,
-    ssl: {
-      rejectUnauthorized: true,
-      ca: fs.readFileSync("./ca.pem").toString(),
-    },
-  };
+const db = mysql.createConnection({
+    host: process.env.DATABASE_HOST,
+    user: 'root',
+    password: '',
+    database: 'caffe'
+});
 
-  const client = new pg.Client(db);
-  client.connect(function (err) {
+db.connect(err => {
     if (err) throw err;
-    client.query("SELECT VERSION()", [], function (err, result) {
-      if (err) throw err;
-  
-      console.log(result.rows[0]);
-      client.end(function (err) {
-        if (err) throw err;
-      });
-    });
-  });
+    console.log('Connected to MySQL');
+});
 
 // Set up multer storage for handling file uploads
 const storage = multer.diskStorage({
@@ -54,9 +40,6 @@ const upload = multer({ storage: storage });
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-});
 // Add item to category with image
 app.post('/api/items/:categoryId', upload.single('image'), (req, res) => {
     const { categoryId } = req.params;
