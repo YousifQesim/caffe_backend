@@ -1,5 +1,5 @@
 const express = require('express');
-const mysql = require('mysql2');
+const { Pool } = require('pg');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const multer = require('multer');
@@ -12,18 +12,12 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // Set up MySQL connection
-const db = mysql.createConnection({
-    host: process.env.DATABASE_HOST,
-    user: 'root',
-    password: '',
-    database: 'caffe'
-});
-
-db.connect(err => {
-    if (err) throw err;
-    console.log('Connected to MySQL');
-});
-
+const db = new Pool({
+    connectionString: 'postgresql://caffe_34so_user:H4X18SnsjyxVV8ZOPqs070C0uofgK1ce@dpg-cpr04t5umphs73btkbn0-a/caffe_34so',
+    ssl: {
+      rejectUnauthorized: false // May not be needed on Render
+    }
+  });
 // Set up multer storage for handling file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
