@@ -13,13 +13,7 @@ app.use(bodyParser.json());
 
 // Set up MySQL connection
 const db =' mysql --user avnadmin --password=AVNS_Pt77Qn3tm0nOtLYE_Kx --host mysql-19e18526-kingshawkat3-1eb9.e.aivencloud.com --port 27396 defaultdb'
-db.connect(err => {
-    if (err) {
-        console.error('Error connecting to MySQL:', err);
-        return;
-    }
-    console.log('Connected to MySQL');
-});
+
 
 // Set up multer storage for handling file uploads
 const storage = multer.diskStorage({
