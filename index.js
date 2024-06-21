@@ -20,7 +20,10 @@ const db = mysql.createConnection({
 });
 
 db.connect(err => {
-    if (err) throw err;
+    if (err) {
+        console.error('Error connecting to MySQL:', err);
+        return;
+    }
     console.log('Connected to MySQL');
 });
 
@@ -40,6 +43,10 @@ const upload = multer({ storage: storage });
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Fetch home page
+app.get('/', (req, res) => {
+    res.send('Welcome to the restaurant API');
+});
 // Add item to category with image
 app.post('/api/items/:categoryId', upload.single('image'), (req, res) => {
     const { categoryId } = req.params;
