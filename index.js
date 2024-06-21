@@ -16,10 +16,10 @@ const db = mysql.createConnection({
     host: process.env.HOST,
     port: process.env.PORT,
     user: process.env.USER,
-    password: process.env.PASSWORD , // Replace with your actual password
+    password: process.env.PASSWORD,
     database: process.env.DATABASE,
     ssl: {
-        ca: process.env.MYSQL_CA, // Load the CA cert from an environment variable
+        ca: process.env.MYSQL_CA,
         rejectUnauthorized: true
     }
 });
