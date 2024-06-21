@@ -19,7 +19,8 @@ const db = mysql.createConnection({
     password: 'AVNS_Pt77Qn3tm0nOtLYE_Kx', // Replace with your actual password
     database: 'defaultdb',
     ssl: {
-        ca: fs.readFileSync(path.join(__dirname, 'path_to_your_ca_cert.pem')) // Replace with your CA certificate path
+        ca: process.env.MYSQL_CA, // Load the CA cert from an environment variable
+        rejectUnauthorized: true
     }
 });
 db.connect(err => {
