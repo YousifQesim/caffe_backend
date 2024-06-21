@@ -16,7 +16,7 @@ const db = mysql.createConnection({
     host: 'mysql-19e18526-kingshawkat3-1eb9.e.aivencloud.com',
     port: 27396,
     user: 'avnadmin',
-    password: 'AVNS_Pt77Qn3tm0nOtLYE_Kx', // Replace with your actual password
+    password: process.env.password , // Replace with your actual password
     database: 'defaultdb',
     ssl: {
         ca: process.env.MYSQL_CA, // Load the CA cert from an environment variable
