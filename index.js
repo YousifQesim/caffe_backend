@@ -13,11 +13,11 @@ app.use(bodyParser.json());
 
 // Set up MySQL connection
 const db = mysql.createConnection({
-    host: 'mysql-19e18526-kingshawkat3-1eb9.e.aivencloud.com',
-    port: 27396,
-    user: 'avnadmin',
-    password: process.env.password , // Replace with your actual password
-    database: 'defaultdb',
+    host: process.env.HOST,
+    port: process.env.PORT,
+    user: process.env.USER,
+    password: process.env.PASSWORD , // Replace with your actual password
+    database: process.env.DATABASE,
     ssl: {
         ca: process.env.MYSQL_CA, // Load the CA cert from an environment variable
         rejectUnauthorized: true
