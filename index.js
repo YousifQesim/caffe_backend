@@ -13,12 +13,15 @@ app.use(bodyParser.json());
 
 // Set up MySQL connection
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '',
-    database: 'caffe'
+    host: 'mysql-19e18526-kingshawkat3-1eb9.e.aivencloud.com',
+    port: 27396,
+    user: 'avnadmin',
+    password: 'AVNS_Pt77Qn3tm0nOtLYE_Kx', // Replace with your actual password
+    database: 'defaultdb',
+    ssl: {
+        ca: fs.readFileSync(path.join(__dirname, 'path_to_your_ca_cert.pem')) // Replace with your CA certificate path
+    }
 });
-
 db.connect(err => {
     if (err) {
         console.error('Error connecting to MySQL:', err);
