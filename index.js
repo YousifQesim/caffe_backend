@@ -6,7 +6,7 @@ const multer = require('multer');
 const path = require('path');
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port =27396;
 
 // Middleware setup
 app.use(cors());
@@ -15,10 +15,10 @@ app.use(bodyParser.json());
 // Set up MySQL connection pool
 const pool = mysql.createPool({
     connectionLimit: 10, // Adjust as per your requirement
-    host: process.env.DATABASE_HOST,
-    user: process.env.DATABASE_USER,
-    password: process.env.DATABASE_PASSWORD,
-    database: process.env.DATABASE_NAME
+    host:"lmysql-19e18526-kingshawkat3-1eb9.e.aivencloud.com",
+    user:"avnadmin",
+    password: "",
+    database: "defaultdb",
 });
 
 // Serve static files from the 'uploads' directory
