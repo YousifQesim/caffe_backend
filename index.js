@@ -6,28 +6,25 @@ const multer = require('multer');
 const path = require('path');
 
 const app = express();
-const port = 27396;
+const port = process.env.PORT || 3000;
 
+// Middleware setup
 app.use(cors());
 app.use(bodyParser.json());
 
-// Set up MySQL connection
-const db = mysql.createConnection({
+// Set up MySQL connection pool
+const pool = mysql.createPool({
+    connectionLimit: 10, // Adjust as per your requirement
     host: process.env.DATABASE_HOST,
     user: process.env.DATABASE_USER,
     password: process.env.DATABASE_PASSWORD,
     database: process.env.DATABASE_NAME
 });
 
-db.connect(err => {
-    if (err) {
-        console.error('Error connecting to MySQL:', err);
-        return;
-    }
-    console.log('Connected to MySQL');
-});
+// Serve static files from the 'uploads' directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Set up multer storage for handling file uploads
+// Multer storage configuration for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/'); // Define the destination folder for storing uploaded files
@@ -37,55 +34,53 @@ const storage = multer.diskStorage({
     }
 });
 
-// Initialize multer middleware
+// Initialize multer middleware with storage configuration
 const upload = multer({ storage: storage });
 
-// Serve static files from the 'uploads' directory
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// Route definitions
 
-// Fetch home page
+// Welcome page
 app.get('/', (req, res) => {
     res.send('Welcome to the restaurant API');
 });
-// Add item to category with image
+
+// Add item to category with image upload
 app.post('/api/items/:categoryId', upload.single('image'), (req, res) => {
     const { categoryId } = req.params;
     const { name, price } = req.body;
-    const imageUrl = req.file ? req.file.filename : null; // Get the filename of the uploaded image, if it exists
+    const imageUrl = req.file ? req.file.filename : null;
 
-    db.query('INSERT INTO items (name, price, category_id, image_url) VALUES (?, ?, ?, ?)', [name, price, categoryId, imageUrl], (err, results) => {
+    pool.query('INSERT INTO items (name, price, category_id, image_url) VALUES (?, ?, ?, ?)', [name, price, categoryId, imageUrl], (err, results) => {
         if (err) {
             console.error('Error adding item:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.status(201).json({ id: results.insertId, name, price, imageUrl });
     });
 });
-// remove item
+
+// Remove item
 app.delete('/api/items/:itemId', (req, res) => {
     const { itemId } = req.params;
-    db.query('DELETE FROM items WHERE id = ?', [itemId], (err, results) => {
+    pool.query('DELETE FROM items WHERE id = ?', [itemId], (err, results) => {
         if (err) {
             console.error('Error removing item:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.json({ message: 'Item removed' });
     });
 });
 
-// update item 
+// Update item
 app.put('/api/items/:itemId', upload.single('image'), (req, res) => {
     const { itemId } = req.params;
     const { name, price } = req.body;
-    const imageUrl = req.file ? req.file.filename : null; // Get the filename of the uploaded image, if it exists
+    const imageUrl = req.file ? req.file.filename : null;
 
-    db.query('UPDATE items SET name = ?, price = ?, image_url = ? WHERE id = ?', [name, price, imageUrl, itemId], (err, results) => {
+    pool.query('UPDATE items SET name = ?, price = ?, image_url = ? WHERE id = ?', [name, price, imageUrl, itemId], (err, results) => {
         if (err) {
             console.error('Error updating item:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.json({ id: itemId, name, price, imageUrl });
     });
@@ -93,11 +88,10 @@ app.put('/api/items/:itemId', upload.single('image'), (req, res) => {
 
 // Fetch categories
 app.get('/api/categories', (req, res) => {
-    db.query('SELECT * FROM categories', (err, results) => {
+    pool.query('SELECT * FROM categories', (err, results) => {
         if (err) {
             console.error('Error fetching categories:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.json(results);
     });
@@ -106,24 +100,23 @@ app.get('/api/categories', (req, res) => {
 // Add category
 app.post('/api/categories', (req, res) => {
     const { name } = req.body;
-    db.query('INSERT INTO categories (name) VALUES (?)', [name], (err, results) => {
+    pool.query('INSERT INTO categories (name) VALUES (?)', [name], (err, results) => {
         if (err) {
             console.error('Error adding category:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.status(201).json({ id: results.insertId, name });
     });
 });
-// edit category
+
+// Update category
 app.put('/api/categories/:categoryId', (req, res) => {
     const { categoryId } = req.params;
     const { name } = req.body;
-    db.query('UPDATE categories SET name = ? WHERE id = ?', [name, categoryId], (err, results) => {
+    pool.query('UPDATE categories SET name = ? WHERE id = ?', [name, categoryId], (err, results) => {
         if (err) {
             console.error('Error updating category:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.json({ id: categoryId, name });
     });
@@ -132,48 +125,79 @@ app.put('/api/categories/:categoryId', (req, res) => {
 // Remove category
 app.delete('/api/categories/:categoryId', (req, res) => {
     const { categoryId } = req.params;
-    db.query('DELETE FROM categories WHERE id = ?', [categoryId], (err, results) => {
+    pool.query('DELETE FROM categories WHERE id = ?', [categoryId], (err, results) => {
         if (err) {
             console.error('Error removing category:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.json({ message: 'Category removed' });
     });
 });
 
-
 // Fetch items by category
 app.get('/api/items/:categoryId', (req, res) => {
     const { categoryId } = req.params;
-    db.query('SELECT * FROM items WHERE category_id = ?', [categoryId], (err, results) => {
+    pool.query('SELECT * FROM items WHERE category_id = ?', [categoryId], (err, results) => {
         if (err) {
             console.error('Error fetching items:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.json(results);
     });
 });
 
-//make order post request
+// Make order post request
 app.post('/api/orders', (req, res) => {
     const { tableNumber, items } = req.body;
-    db.query('INSERT INTO orders (table_number) VALUES (?)', [tableNumber], (err, results) => {
+
+    pool.getConnection((err, connection) => {
         if (err) {
-            console.error('Error adding order:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            console.error('Error getting database connection:', err);
+            return res.status(500).json({ error: 'Internal server error' });
         }
-        const orderId = results.insertId;
-        const orderItems = items.map(item => [orderId, item.id, item.quantity]);
-        db.query('INSERT INTO order_items (order_id, item_id, quantity) VALUES ?', [orderItems], (err, results) => {
+
+        connection.beginTransaction(err => {
             if (err) {
-                console.error('Error adding order items:', err);
-                res.status(500).json({ error: 'Internal server error' });
-                return;
+                console.error('Error starting transaction:', err);
+                connection.release();
+                return res.status(500).json({ error: 'Internal server error' });
             }
-            res.status(201).json({ id: orderId, tableNumber, items });
+
+            connection.query('INSERT INTO orders (table_number) VALUES (?)', [tableNumber], (err, results) => {
+                if (err) {
+                    console.error('Error adding order:', err);
+                    connection.rollback(() => {
+                        connection.release();
+                        return res.status(500).json({ error: 'Internal server error' });
+                    });
+                }
+
+                const orderId = results.insertId;
+                const orderItems = items.map(item => [orderId, item.id, item.quantity]);
+
+                connection.query('INSERT INTO order_items (order_id, item_id, quantity) VALUES ?', [orderItems], (err, results) => {
+                    if (err) {
+                        console.error('Error adding order items:', err);
+                        connection.rollback(() => {
+                            connection.release();
+                            return res.status(500).json({ error: 'Internal server error' });
+                        });
+                    }
+
+                    connection.commit(err => {
+                        if (err) {
+                            console.error('Error committing transaction:', err);
+                            connection.rollback(() => {
+                                connection.release();
+                                return res.status(500).json({ error: 'Internal server error' });
+                            });
+                        }
+
+                        connection.release();
+                        res.status(201).json({ id: orderId, tableNumber, items });
+                    });
+                });
+            });
         });
     });
 });
@@ -181,11 +205,11 @@ app.post('/api/orders', (req, res) => {
 // Fetch orders
 app.get('/api/orders', (req, res) => {
     const query = `
-        SELECT orders.id AS order_id, 
-               orders.table_number, 
-               orders.accepted, 
-               orders.created_at AS order_created_at, 
-               GROUP_CONCAT(items.name) AS item_names, 
+        SELECT orders.id AS order_id,
+               orders.table_number,
+               orders.accepted,
+               orders.created_at AS order_created_at,
+               GROUP_CONCAT(items.name) AS item_names,
                SUM(items.price * order_items.quantity) AS total_price
         FROM orders
         JOIN order_items ON orders.id = order_items.order_id
@@ -193,35 +217,33 @@ app.get('/api/orders', (req, res) => {
         GROUP BY orders.id
         ORDER BY orders.created_at DESC
     `;
-    
-    db.query(query, (err, results) => {
+
+    pool.query(query, (err, results) => {
         if (err) {
             console.error('Error fetching orders:', err);
             return res.status(500).json({ error: 'Internal server error' });
         }
-        
+
         const orders = results.map(row => ({
             id: row.order_id,
             tableNumber: row.table_number,
-            accepted: row.accepted,
+            accepted:            accepted,
             createdAt: row.order_created_at,
             items: row.item_names.split(','), // Convert comma-separated item names to an array
             totalPrice: row.total_price
         }));
-        
+
         res.json(orders);
     });
 });
 
-
 // Accept order
 app.put('/api/orders/:orderId/accept', (req, res) => {
     const { orderId } = req.params;
-    db.query('UPDATE orders SET accepted = TRUE WHERE id = ?', [orderId], (err, results) => {
+    pool.query('UPDATE orders SET accepted = TRUE WHERE id = ?', [orderId], (err, results) => {
         if (err) {
             console.error('Error accepting order:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.json({ message: 'Order accepted' });
     });
@@ -230,23 +252,17 @@ app.put('/api/orders/:orderId/accept', (req, res) => {
 // Remove order
 app.delete('/api/orders/:orderId', (req, res) => {
     const { orderId } = req.params;
-    db.query('DELETE FROM orders WHERE id = ?', [orderId], (err, results) => {
+    pool.query('DELETE FROM orders WHERE id = ?', [orderId], (err, results) => {
         if (err) {
             console.error('Error removing order:', err);
-            res.status(500).json({ error: 'Internal server error' });
-            return;
+            return res.status(500).json({ error: 'Internal server error' });
         }
         res.json({ message: 'Order removed' });
     });
 });
 
-
-// Handle errors
-app.use((err, req, res, next) => {
-    console.error('Error:', err);
-    res.status(500).json({ error: 'Internal server error' });
-});
-
+// Start the server
 app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+    console.log(`Server is running on http://localhost:${port}`);
 });
+
