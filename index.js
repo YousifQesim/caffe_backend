@@ -1,4 +1,4 @@
-require('dotenv').config();
+
 const express = require("express");
 const mysql = require("mysql2");
 const bodyParser = require("body-parser");
@@ -14,10 +14,10 @@ app.use(bodyParser.json());
 
 // Set up MySQL connection
 const db = mysql.createConnection({
-  host: process.env.DB_HOST ,
-  user: process.env.DB_USER ,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME ,
+  host: "localhost" ,
+  user: "root" ,
+  password: "" ,
+  database:"caffe" ,
 });
 
 db.connect((err) => {
@@ -48,8 +48,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const jwtSecret = process.env.JWT_SECRET || "your_jwt_secret_key";
 
 // Static credentials
-const adminUsername = process.env.ADMIN_USERNAME ;
-const adminPassword = process.env.ADMIN_PASSWORD ;
+const adminUsername = "admin" ;
+const adminPassword = "admin123" ;
 
 // Middleware to authenticate JWT tokens
 const authenticateToken = (req, res, next) => {
