@@ -6,7 +6,7 @@ const multer = require('multer');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const app = express();
-const port = 3000;
+
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -358,6 +358,3 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: 'Internal server error' });
 });
 
-app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-});
