@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const mysql = require("mysql2");
 const bodyParser = require("body-parser");
@@ -6,17 +7,26 @@ const multer = require("multer");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
 
 // Set up MySQL connection
 const db = mysql.createConnection({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "caffe",
+  host: process.env.DB_HOST ,
+  user: process.env.DB_USER ,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME ,
+});
+
+db.connect((err) => {
+  if (err) {
+    console.error("Error connecting to the database:", err);
+    process.exit(1); // Exit the application with an error code
+  } else {
+    console.log("Connected to the MySQL database.");
+  }
 });
 
 // Set up multer storage for handling file uploads
@@ -35,11 +45,11 @@ const upload = multer({ storage: storage });
 // Serve static files from the 'uploads' directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-const jwtSecret = "your_jwt_secret_key";
+const jwtSecret = process.env.JWT_SECRET || "your_jwt_secret_key";
 
 // Static credentials
-const adminUsername = "admin";
-const adminPassword = "password";
+const adminUsername = process.env.ADMIN_USERNAME ;
+const adminPassword = process.env.ADMIN_PASSWORD ;
 
 // Middleware to authenticate JWT tokens
 const authenticateToken = (req, res, next) => {
@@ -52,9 +62,10 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
 app.get("/", (req, res) => {
-    res.send("Hello World!");
-    });
+  res.send("Hello World!");
+});
 
 // Add user login endpoint
 app.post("/api/login", (req, res) => {
@@ -112,6 +123,7 @@ app.post("/api/items/:categoryId", upload.single("image"), (req, res) => {
     }
   );
 });
+
 // remove item
 app.delete("/api/items/:itemId", (req, res) => {
   const { itemId } = req.params;
@@ -173,6 +185,7 @@ app.post("/api/categories", (req, res) => {
     }
   );
 });
+
 // edit category
 app.put("/api/categories/:categoryId", (req, res) => {
   const { categoryId } = req.params;
@@ -258,18 +271,18 @@ app.post("/api/orders", (req, res) => {
 // Fetch orders
 app.get("/api/orders", (req, res) => {
   const query = `
-        SELECT orders.id AS order_id, 
-               orders.table_number, 
-               orders.accepted, 
-               orders.created_at AS order_created_at, 
-               GROUP_CONCAT(items.name) AS item_names, 
-               SUM(items.price * order_items.quantity) AS total_price
-        FROM orders
-        JOIN order_items ON orders.id = order_items.order_id
-        JOIN items ON order_items.item_id = items.id
-        GROUP BY orders.id
-        ORDER BY orders.created_at DESC
-    `;
+    SELECT orders.id AS order_id, 
+           orders.table_number, 
+           orders.accepted, 
+           orders.created_at AS order_created_at, 
+           GROUP_CONCAT(items.name) AS item_names, 
+           SUM(items.price * order_items.quantity) AS total_price
+    FROM orders
+    JOIN order_items ON orders.id = order_items.order_id
+    JOIN items ON order_items.item_id = items.id
+    GROUP BY orders.id
+    ORDER BY orders.created_at DESC
+  `;
 
   db.query(query, (err, results) => {
     if (err) {
@@ -319,6 +332,7 @@ app.delete("/api/orders/:orderId", (req, res) => {
     res.json({ message: "Order removed" });
   });
 });
+
 //edit orders
 app.put("/api/orders/:orderId", (req, res) => {
   const { orderId } = req.params;
