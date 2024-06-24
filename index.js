@@ -19,10 +19,6 @@ const db = mysql.createConnection({
     database: 'caffe'
 });
 
-db.connect(err => {
-    if (err) throw err;
-    console.log('Connected to MySQL');
-});
 
 
 
