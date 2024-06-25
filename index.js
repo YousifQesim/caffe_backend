@@ -1,4 +1,3 @@
-
 const express = require("express");
 const mysql = require("mysql2");
 const bodyParser = require("body-parser");
@@ -7,23 +6,23 @@ const multer = require("multer");
 const path = require("path");
 const jwt = require("jsonwebtoken");
 const app = express();
-const port = 4000;
+const port = 3000;
 
 app.use(cors());
 app.use(bodyParser.json());
 
 // Set up MySQL connection
 const db = mysql.createConnection({
-  host: "localhost" ,
-  user: "root" ,
-  password: "" ,
-  database:"caffe" ,
+  host: "localhost",
+  user: "root",
+  password: "",
+  database: "caffe",
 });
 
 db.connect((err) => {
   if (err) {
     console.error("Error connecting to the database:", err);
-    process.exit(1); 
+    process.exit(1);
   } else {
     console.log("Connected to the MySQL database.");
   }
@@ -48,8 +47,8 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 const jwtSecret = process.env.JWT_SECRET || "your_jwt_secret_key";
 
 // Static credentials
-const adminUsername = "admin" ;
-const adminPassword = "admin123" ;
+const adminUsername = "admin";
+const adminPassword = "admin123";
 
 // Middleware to authenticate JWT tokens
 const authenticateToken = (req, res, next) => {
